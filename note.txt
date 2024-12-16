@@ -1,0 +1,2 @@
+uvicorn fastAPI_request_method_logic.books:app --host 127.0.0.1 --port 1000 --reload // thay đổi cổng
+uvicorn fastAPI_request_method_logic.books:app --host 127.0.0.1 --reload
