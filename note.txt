@@ -1,6 +1,29 @@
+=)) đây là chú thích cá nhân nên mình muốn note gì note
+
 uvicorn fastAPI_request_method_logic.books:app --host 127.0.0.1 --port 1000 --reload // thay đổi cổng
 uvicorn fastAPI_request_method_logic.books:app --host 127.0.0.1 --reload
 
 
 uvicorn move_fast_with_fastAPI.books:app --host 127.0.0.1 --reload
 uvicorn move_fast_with_fastAPI.books:app --host 127.0.0.1 --port 1000 --reload
+
+
+uvicorn todo_app.main:app --host 127.0.0.1 --port 1000 --reload
+// vào thư mục todo_app chạy lệnh bên duới để tạo bảng
+uvicorn main:app --host 127.0.0.1 --reload
+
+uvicorn auth:app --host 127.0.0.1  --reload
+
+
+sqlite3 todos.db
+được sử dụng để mở hoặc tạo một cơ sở dữ liệu SQLite
+
+insert into  todos(title,description,priority,complete) values ('Feed the dog','He is getting hungry',5,False);
+.mode column
+select * from todos;
+.mode markdown
+.mode box
+delete from todos where id=1;
+
+// todo_app chạy ở thư mục learn_fastAPI
+uvicorn todo_app.main:app --host 127.0.0.1 --port 1000 --reload
