@@ -3,9 +3,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from starlette import status
-from ..database import SessionLocal
-from ..models import Todo
-from .auth import get_current_user
+from database import SessionLocal
+from models import Todo
+from routers.auth import get_current_user
 
 router = APIRouter(
     prefix="/todo",

@@ -1,4 +1,4 @@
-from .database import Base
+from database import Base
 from sqlalchemy import Column, Integer, String, Boolean, ForeignKey
 
 
@@ -13,6 +13,7 @@ class User(Base):
     hashed_password = Column(String)
     is_active = Column(Boolean, default=True)
     role = Column(String)
+    phone_number = Column(String)
 
 
 class Todo(Base):
@@ -24,3 +25,4 @@ class Todo(Base):
     priority = Column(Integer)
     complete = Column(Boolean, default=False)
     owner_id = Column(Integer, ForeignKey('users.id'))
+
