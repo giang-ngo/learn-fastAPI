@@ -3,9 +3,9 @@ from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 from fastapi import APIRouter, Depends, HTTPException, Path
 from starlette import status
-from database import SessionLocal
-from models import Todo
-from routers.auth import get_current_user
+from ..database import SessionLocal
+from ..models import Todo
+from .auth import get_current_user
 
 router = APIRouter(
     prefix="/todo",
@@ -51,13 +51,13 @@ async def create_todo(user: user_dependency,
     if user is None:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED,
                             detail='Authentication Failed.')
-    todo_model = Todo(**todo_request.dict(), owner_id=user.get('id'))
+    todo_model = Todo(**todo_request.model_dump(), owner_id=user.get('id'))
 
     db.add(todo_model)
     db.commit()
 
 
-@router.put('/{todo_id}', status_code=status.HTTP_200_OK)
+@router.put('/{todo_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def update_todo(user: user_dependency, db: db_dependency,
                       todo_request: TodoRequest, todo_id: int = Path(gt=0)):
     if user is None:

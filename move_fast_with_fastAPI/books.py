@@ -135,7 +135,7 @@ def find_book_id(book: Book):
     return book
 
 
-@app.put('/books/update_book/',status_code=status.HTTP_204_NO_CONTENT)
+@app.put('/books/update_book/', status_code=status.HTTP_204_NO_CONTENT)
 async def update_book(book: BookRequest):
     book_changed = False
     for i in range(len(BOOKS)):
@@ -146,7 +146,7 @@ async def update_book(book: BookRequest):
         raise HTTPException(status_code=404, detail='Item not found')
 
 
-@app.delete('/books/{id}/',status_code=status.HTTP_204_NO_CONTENT)
+@app.delete('/books/{id}/', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_book(id: int = Path(gt=0)):
     book_changed = False
     for i in range(len(BOOKS)):
