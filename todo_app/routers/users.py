@@ -1,65 +1,67 @@
-from typing import Annotated
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 from sqlalchemy.orm import Session
-from fastapi import APIRouter, Depends, HTTPException, Path
+from fastapi import APIRouter, Depends, Request, Form
 from starlette import status
-from ..database import SessionLocal
-from ..models import Todo, User
-from .auth import get_current_user
-from passlib.context import CryptContext
+from ..database import SessionLocal, engine
+
+from .. import models
+from .auth import get_current_user, get_password_hash, verify_password
+
+from starlette.responses import RedirectResponse
+from fastapi.responses import HTMLResponse
+from fastapi.templating import Jinja2Templates
 
 router = APIRouter(
-    prefix="/user",
+    prefix="/users",
     tags=["user"],
+    responses={404: {"description": "Not found"}},
 )
+
+models.Base.metadata.create_all(bind=engine)
+
+templates = Jinja2Templates(directory="todo_app/templates")
 
 
 def get_db():
-    db = SessionLocal()
     try:
+        db = SessionLocal()
         yield db
     finally:
         db.close()
 
 
-db_dependency = Annotated[Session, Depends(get_db)]
-user_dependency = Annotated[dict, Depends(get_current_user)]
-bcrypt_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
-
-
 class UserVerification(BaseModel):
+    username: str
     password: str
-    new_password: str = Field(min_length=6)
+    new_password: str
 
 
-@router.get('/', status_code=status.HTTP_200_OK)
-async def get_user(user: user_dependency, db: db_dependency):
+@router.get("/edit-password", response_class=HTMLResponse)
+async def edit_user_view(request: Request):
+    user = await get_current_user(request)
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
-    return db.query(User).filter(User.id == user.get('id')).first()
+        return RedirectResponse("/auth", status_code=status.HTTP_302_FOUND)
+
+    return templates.TemplateResponse("edit-user-password.html", {"request": request, "user": user})
 
 
-@router.put('/password', status_code=status.HTTP_204_NO_CONTENT)
-async def change_password(user: user_dependency, db: db_dependency, user_verification: UserVerification):
+@router.post("/edit-password", response_class=HTMLResponse)
+async def edit_password_change(request: Request, username: str = Form(...)
+                               , password: str = Form(...),
+                               password2: str = Form(...),
+                               db: Session = Depends(get_db)):
+    user = await get_current_user(request)
     if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
+        return RedirectResponse("/auth", status_code=status.HTTP_302_FOUND)
 
-    user_model = db.query(User).filter(User.id == user.get('id')).first()
+    user_data = db.query(models.User).filter(models.User.username == username).first()
+    msg = 'Invalid username or password'
 
-    if not bcrypt_context.verify(user_verification.password, user_model.hashed_password):
-        raise HTTPException(status_code=401, detail='Error on change password')
-
-    user_model.hashed_password = bcrypt_context.hash(user_verification.new_password)
-
-    db.add(user_model)
-    db.commit()
-
-
-@router.put('/phonenumber/{phone_number}', status_code=status.HTTP_204_NO_CONTENT)
-async def change_phone_number(user: user_dependency, db: db_dependency, phone_number: str):
-    if user is None:
-        raise HTTPException(status_code=401, detail='Authentication Failed')
-    user_model = db.query(User).filter(User.id == user.get('id')).first()
-    user_model.phone_number = phone_number
-    db.add(user_model)
-    db.commit()
+    if user_data is not None:
+        if username == user_data.username and verify_password(password, user_data.hashed_password):
+            user_data.hashed_password = get_password_hash(password2)
+            db.add(user_data)
+            db.commit()
+            msg = 'Password updated'
+    return templates.TemplateResponse('edit-user-password.html',
+                                      {"request": request, "user": user, "msg": msg})
